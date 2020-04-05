@@ -13,6 +13,8 @@ class Classifier {
 	private double[][] dataSet;
 	// W Matrix
 	private double[][] wMatrix;
+	// Unknown class pattern
+	private double[] unknownClassPattern;
 
 	public Classifier(double[][] dataSet) {
 		this.dataSet = dataSet;
@@ -37,6 +39,8 @@ class Classifier {
 					classesMap.put((int) classType, new ArrayList<Integer>());
 				}
 				classesMap.get(classType).add(x);
+			} else {
+				unknownClassPattern = dataSet[x];
 			}
 		}
 
@@ -72,6 +76,41 @@ class Classifier {
 				}
 			}
 		}
+
+		calculateFunctions();
+	}
+	
+	/**
+	 * Calculate the functions value 
+	 */
+	private void calculateFunctions() {
+		int patternClassIndex = dataSet[0].length - 1;
+		
+		unknownClassPattern[patternClassIndex] = 1;
+
+		int maxFunctionValueIndex = -1;
+		double maxFunctionValue = Integer.MIN_VALUE;
+		for (int x = 0; x < wMatrix.length; ++x) {
+			// Calculate the function value
+			double functionValue = 0;
+			for (int y = 0; y < wMatrix[0].length; ++y) {
+				functionValue += wMatrix[x][y] * unknownClassPattern[y];
+			}
+
+			// Check if the current function value is the biggest and remember the index
+			// ( it will be considered as the class of the pattern )
+			if (maxFunctionValue < functionValue) {
+				maxFunctionValue = functionValue;
+				maxFunctionValueIndex = x;
+			}
+		}
+
+		if (maxFunctionValueIndex != -1) {
+			// Increment the index by one to make sure it is a class
+			unknownClassPattern[patternClassIndex] = maxFunctionValueIndex + 1;
+		}
+		
+		System.out.println("The pattern class is " + (maxFunctionValueIndex + 1));
 	}
 
 	/**
