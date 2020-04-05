@@ -6,7 +6,7 @@ public class VMain {
 		try {
 			double[][] data = FileUtils.readLearningSetFromFile("in.txt");
 			Classifier classifier = new Classifier(data);
-			System.err.println();
+			System.err.println(classifier);
 		} catch (USVInputFileCustomException e) {
 			e.printStackTrace();
 		}
