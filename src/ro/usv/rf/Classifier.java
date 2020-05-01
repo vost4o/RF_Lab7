@@ -8,15 +8,17 @@ import java.util.Set;
 
 class Classifier {
 	// The key is the class and the value is the list of indexes
-	private Map<Integer, ArrayList<Integer>> classesMap;
+	private Map<String, Integer> classWMatrix;
 	// Data set
-	private double[][] dataSet;
+	private String[][] dataSet;
 	// W Matrix
 	private double[][] wMatrix;
 	// Unknown class pattern
-	private double[] unknownClassPattern;
+	private String[] unknownClassPattern;
+	// Classes map
+	private Map<String, ArrayList<Integer>> classesMap;
 
-	public Classifier(double[][] dataSet) {
+	public Classifier(String[][] dataSet) {
 		this.dataSet = dataSet;
 		// Initialize classes map
 		initClassesMap();
@@ -24,19 +26,22 @@ class Classifier {
 	}
 
 	private void initClassesMap() {
-		classesMap = new HashMap<Integer, ArrayList<Integer>>();
+		classesMap = new HashMap<String, ArrayList<Integer>>();
+		classWMatrix = new HashMap<String, Integer>();
 	}
 
 	/**
 	 * Remember all the classes indices to find them more easily at the calculations
 	 */
 	private void createClassesMap() {
+		int index = 0;
 		for (int x = 0; x < dataSet.length; ++x) {
-			int classType = (int) dataSet[x][dataSet[x].length - 1];
+			String classType = dataSet[x][dataSet[x].length - 1];
 			// Ignore the -1 class ( the pattern class we need to find out )
-			if (classType != -1) {
+			if (!classType.equals("x")) {
 				if (!classesMap.containsKey(classType)) {
-					classesMap.put((int) classType, new ArrayList<Integer>());
+					classesMap.put(classType, new ArrayList<Integer>());
+					classWMatrix.put(classType, index++);
 				}
 				classesMap.get(classType).add(x);
 			} else {
@@ -65,28 +70,27 @@ class Classifier {
 				}
 			} else {
 				// Calculate the w1..n term
-				for (int classType : classesMap.keySet()) {
+				for (String classType : classesMap.keySet()) {
 					// Go through all classes
 					List<Integer> indexes = classesMap.get(classType);
-					for (int j = 0; j < indexes.size(); ++j) {
-						wMatrix[classType - 1][i] += dataSet[indexes.get(j)][i];
+					int classIndex = classWMatrix.get(classType);
+					for (int j = 0; j < indexes.size(); j++) {
+						wMatrix[classIndex][i] += Double.parseDouble(dataSet[indexes.get(j)][i]);
 					}
 					// Don't forget to divide to number of pattern's of the coresponding class
-					wMatrix[classType - 1][i] /= indexes.size();
+					wMatrix[classIndex][i] /= indexes.size();
 				}
 			}
 		}
 
 		calculateFunctions();
 	}
-	
+
 	/**
-	 * Calculate the functions value 
+	 * Calculate the functions value
 	 */
 	private void calculateFunctions() {
 		int patternClassIndex = dataSet[0].length - 1;
-		
-		unknownClassPattern[patternClassIndex] = 1;
 
 		int maxFunctionValueIndex = -1;
 		double maxFunctionValue = Integer.MIN_VALUE;
@@ -94,7 +98,7 @@ class Classifier {
 			// Calculate the function value
 			double functionValue = 0;
 			for (int y = 0; y < wMatrix[0].length; ++y) {
-				functionValue += wMatrix[x][y] * unknownClassPattern[y];
+				functionValue += wMatrix[x][y] * Double.valueOf(unknownClassPattern[y]);
 			}
 
 			// Check if the current function value is the biggest and remember the index
@@ -106,10 +110,17 @@ class Classifier {
 		}
 
 		if (maxFunctionValueIndex != -1) {
+			String foundClass = "";
+			for (String key : classWMatrix.keySet()) {
+				int keyIndex = classWMatrix.get(key);
+				if (keyIndex == maxFunctionValueIndex) {
+					foundClass = key;
+				}
+			}
 			// Increment the index by one to make sure it is a class
-			unknownClassPattern[patternClassIndex] = maxFunctionValueIndex + 1;
+			unknownClassPattern[patternClassIndex] = foundClass;
 		}
-		
+
 		System.out.println("The pattern class is " + (maxFunctionValueIndex + 1));
 	}
 
