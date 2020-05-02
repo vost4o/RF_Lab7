@@ -34,14 +34,12 @@ class Classifier {
 	 * Remember all the classes indices to find them more easily at the calculations
 	 */
 	private void createClassesMap() {
-		int index = 0;
 		for (int x = 0; x < dataSet.length; ++x) {
 			String classType = dataSet[x][dataSet[x].length - 1];
 			// Ignore the -1 class ( the pattern class we need to find out )
 			if (!classType.equals("x")) {
 				if (!classesMap.containsKey(classType)) {
 					classesMap.put(classType, new ArrayList<Integer>());
-					classWMatrix.put(classType, index++);
 				}
 				classesMap.get(classType).add(x);
 			} else {
@@ -60,6 +58,13 @@ class Classifier {
 		int parameterCount = dataSet[0].length;
 
 		wMatrix = new double[classCount][parameterCount];
+
+		// create w matrix classes map
+		int index = 0;
+		for (String key : classesMap.keySet()) {
+			classWMatrix.put(key, index++);
+		}
+
 		for (int i = 0; i < parameterCount; ++i) {
 			if (i == parameterCount - 1) {
 				// Calculate the free term
@@ -98,7 +103,11 @@ class Classifier {
 			// Calculate the function value
 			double functionValue = 0;
 			for (int y = 0; y < wMatrix[0].length; ++y) {
-				functionValue += wMatrix[x][y] * Double.valueOf(unknownClassPattern[y]);
+				String number = unknownClassPattern[y];
+				if(number.equals("x")) {
+					number = "1";
+				}
+				functionValue += wMatrix[x][y] * Double.valueOf(number);					
 			}
 
 			// Check if the current function value is the biggest and remember the index
@@ -109,19 +118,18 @@ class Classifier {
 			}
 		}
 
+		String foundClass = "";
 		if (maxFunctionValueIndex != -1) {
-			String foundClass = "";
 			for (String key : classWMatrix.keySet()) {
 				int keyIndex = classWMatrix.get(key);
 				if (keyIndex == maxFunctionValueIndex) {
 					foundClass = key;
 				}
 			}
-			// Increment the index by one to make sure it is a class
 			unknownClassPattern[patternClassIndex] = foundClass;
 		}
 
-		System.out.println("The pattern class is " + (maxFunctionValueIndex + 1));
+		System.out.println("The pattern class is " + foundClass);
 	}
 
 	/**
